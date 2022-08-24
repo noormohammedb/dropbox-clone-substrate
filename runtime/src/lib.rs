@@ -283,7 +283,7 @@ construct_runtime!(
 		TransactionPayment: pallet_transaction_payment,
 		Sudo: pallet_sudo,
 		// Include the custom logic from the pallet-pallet_dropbox in the runtime.
-		TemplateModule: pallet_pallet_dropbox,
+		dropbox: pallet_pallet_dropbox,
 	}
 );
 
