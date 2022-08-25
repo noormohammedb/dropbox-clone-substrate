@@ -67,7 +67,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn file_datas)]
-	pub(super) type file_datas<T: Config> = StorageMap<_, Blake2_128, String, my_file_struct<T>>;
+	pub(super) type file_datas<T: Config> = StorageMap<_, Twox64Concat, String, my_file_struct<T>>;
 
 	// Pallets use events to inform users when important changes are made.
 	// https://docs.substrate.io/v3/runtime/events-and-errors
@@ -78,6 +78,7 @@ pub mod pallet {
 		/// parameters. [something, who]
 		SomethingStored(u32, T::AccountId),
 		NewFile(T::AccountId, String),
+		Download(String),
 	}
 
 	// Errors inform users that something went wrong.
@@ -116,7 +117,7 @@ pub mod pallet {
 
 			// Update storage.
 			// <Something<T>>::put(something);
-			let new_file = my_file_struct {
+			let new_file = my_file_struct::<T> {
 				file_url,
 				downloadable,
 				file_type,
@@ -136,25 +137,31 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/*
-		/// An example dispatchable that may throw a custom error.
 		#[pallet::weight(10_000 + T::DbWeight::get().reads_writes(1,1))]
-		pub fn cause_error(origin: OriginFor<T>) -> DispatchResult {
+		pub fn download_file(origin: OriginFor<T>, file_hash: String) -> DispatchResult {
 			let _who = ensure_signed(origin)?;
 
-			// Read a value from storage.
-			match <Something<T>>::get() {
-				// Return an error if the value has not been set.
-				None => return Err(Error::<T>::NoneValue.into()),
-				Some(old) => {
-					// Increment the value read from storage; will error in the event of overflow.
-					let new = old.checked_add(1).ok_or(Error::<T>::StorageOverflow)?;
-					// Update the value in storage with the incremented result.
-					<Something<T>>::put(new);
-					Ok(())
-				},
-			}
+			let data = file_datas::<T>::get(&file_hash).ok_or(Error::<T>::NoneValue);
+
+			file_datas::<T>::mutate(file_hash, |files| {
+				files.as_mut().unwrap().d_count += 1;
+			});
+
+			Self::deposit_event(Event::Download(data.unwrap().file_url));
+
+			// match <Something<T>>::get() {
+			// 	// Return an error if the value has not been set.
+			// 	None => return Err(Error::<T>::NoneValue.into()),
+			// 	Some(old) => {
+			// 		// Increment the value read from storage; will error in the event of overflow.
+			// 		let new = old.checked_add(1).ok_or(Error::<T>::StorageOverflow)?;
+			// 		// Update the value in storage with the incremented result.
+			// 		<Something<T>>::put(new);
+			// 		Ok(())
+			// 	},
+			// }
+
+			Ok(())
 		}
-		*/
 	}
 }
